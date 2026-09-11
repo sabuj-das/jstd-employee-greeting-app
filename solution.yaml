@@ -1,0 +1,12 @@
+apiVersion: solution.sap/v1
+kind: Solution
+
+metadata:
+  name: employee-greeting-5f068
+  version: "1.0.0"
+  description: "Automates work anniversary and birthday greeting emails via CSV-driven n8n workflows with AI-based date matching and HR approval"
+
+assets:
+  - ref: ./assets/workflows/employee-greeting-orchestrator/asset.yaml
+  - ref: ./assets/workflows/work-anniversary-email-workflow/asset.yaml
+  - ref: ./assets/workflows/birthday-greeting-email-workflow/asset.yaml
