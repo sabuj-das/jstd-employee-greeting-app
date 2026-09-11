@@ -49,27 +49,8 @@ Receives the HR-uploaded CSV file via webhook, parses the employees, uses a SAP 
 ### Filter — Keep Only Matches
 - [ ] Add a **Filter** node named `"Keep Matches Only"` that passes through only employees where `anniversaryMatch === true` OR `birthdayMatch === true`
 
-### HR Approval (SAP Task Center)
-- [ ] Look up `CUSTOM.sapTaskCenter` from the node catalog before adding it
-- [ ] Add a **SAP Task Center** node named `"HR Approval"` that:
-  - Sends the full list of matched employees for HR review
-  - Task subject: `"Greeting Email Approval — {n} employee(s) matched today"`
-  - Task body: list of matched employees with their greeting type(s) (anniversary / birthday / both)
-  - Uses a recipient target (HR approver role or email)
-  - The workflow waits for the HR decision
-  - Emits log on approval: `M3.achieved: HR approval received — {n} employees approved for greeting dispatch`
-  - Emits log on rejection/timeout: `M3.missed: HR approval not received within timeout or was rejected — no emails sent`
-
-### Route on HR Decision
-- [ ] Add a **Switch** node named `"Check Approval"` that:
-  - Routes to the dispatch branch on `approved`
-  - Routes to the reject branch on `rejected` or timeout
-
-### Reject Branch
-- [ ] Add a **Respond to Webhook** node named `"Respond — Rejected"` that returns HTTP 200 with body `{ "status": "rejected", "message": "HR did not approve. No emails sent." }`
-
-### Dispatch Loop — Split Approved Employees
-- [ ] Add a **Split Out** node named `"Split Approved"` to iterate over approved employees
+### Dispatch Loop — Split Matched Employees
+- [ ] Add a **Split Out** node named `"Split Matched"` to iterate over matched employees (no approval step — dispatch happens immediately after matching)
 
 ### Route Anniversary vs Birthday
 - [ ] Add a **Switch** node named `"Route Greeting Type"` with three outputs:
@@ -97,7 +78,7 @@ Receives the HR-uploaded CSV file via webhook, parses the employees, uses a SAP 
 ### Final Response
 - [ ] Add a **Code** node named `"Build Summary"` that counts sent emails and builds a summary message
   - Emits log: `M4.achieved: All greeting emails dispatched successfully — {n} emails sent`
-  - Emits log on error: `M4.missed: One or more emails failed to send — HR notified for follow-up`
+  - Emits log on error: `M4.missed: One or more emails failed to send`
 - [ ] Add a **Respond to Webhook** node named `"Respond — Success"` that returns HTTP 200 with the summary
 
 ---
@@ -116,6 +97,6 @@ Receives the HR-uploaded CSV file via webhook, parses the employees, uses a SAP 
 
 - [ ] Confirm every node is reachable from the Webhook trigger
 - [ ] Confirm all convergence points (dual-match fan-out) pass through the Merge node before `Respond — Success`
-- [ ] Confirm both reject and success paths each contain a `respondToWebhook` node
+- [ ] Confirm the success path contains a `respondToWebhook` node
 - [ ] Run `validate-n8n-workflow` before writing the file — fix all errors
 - [ ] Write the final file to `assets/workflows/employee-greeting-orchestrator/employee-greeting-orchestrator.n8n.json` in a single write call

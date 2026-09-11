@@ -132,16 +132,9 @@ Any employee in the organization. They receive a personalized greeting email on 
 - **Maps to Objective**: Objective 1 — zero missed milestones
 - **Priority Rank**: 2
 
-**R3: HR Approval Gate**
+**R3: ~~HR Approval Gate~~ (Removed)**
 
-- **Problem to Solve**: HR must retain control over which emails go out and when — no unsupervised sending.
-- **User Story**: As an HR employee, I need to review and approve the list of matched employees before any email is sent so that I remain in control of all outgoing communications.
-- **Acceptance Criteria**:
-  - Given the AI agent has completed its evaluation, when matches exist, then a list of matched employees with their greeting type(s) is presented to HR for approval.
-  - Given HR approves the list, when approval is confirmed, then the workflow proceeds to dispatch emails.
-  - Given HR does not approve, when the workflow times out or is rejected, then no emails are sent.
-- **Maps to Objective**: Objective 3 — HR oversight
-- **Priority Rank**: 3
+> The manual approval step has been removed. Emails are dispatched automatically after the AI matching step completes.
 
 **R4: Work Anniversary Sub-Workflow**
 
@@ -210,7 +203,7 @@ Three n8n workflows collaborate to deliver the solution. The Main Orchestrator h
 - Building the list of matched employees for HR review
 
 **Actions that require human review or approval:**
-- Sending any greeting email — HR must explicitly approve the matched list before dispatch
+- None at this time — the approval step has been removed. Greeting emails are dispatched automatically once date matching is complete.
 
 **Model or engine used:** SAP AI Core via SAP Agent node (SAP Generative AI Hub)
 
