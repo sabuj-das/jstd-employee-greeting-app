@@ -1,0 +1,160 @@
+{
+  "name": "Birthday Greeting Email Workflow",
+  "description": "Receives employee data from the orchestrator for employees whose birthday (DD.MM of dateOfBirth) matches today. Uses a SAP Agent to generate a personalized birthday greeting email body, then logs the email. Replace the log node with an email node when a provider is configured.",
+  "nodes": [
+    {
+      "id": "node-bd-trigger",
+      "name": "Birthday Greeting Email Received",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "birthday-greeting-email",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "node-bd-extract",
+      "name": "Extract Employee Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Extract employee fields from webhook body\nconst body = $('Birthday Greeting Email Received').item.json.body;\nconst employeeName = body.name || '';\nconst employeeEmail = body.email || '';\nconst dateOfBirth = body.dateOfBirth || '';\n\nif (!employeeName || !employeeEmail) {\n  throw new Error('Missing required fields: name and/or email');\n}\n\nreturn [{ json: { employeeName, employeeEmail, dateOfBirth } }];"
+      }
+    },
+    {
+      "id": "node-bd-agent",
+      "name": "Generate Birthday Email",
+      "type": "CUSTOM.sapAgent",
+      "typeVersion": 1,
+      "position": [640, 300],
+      "parameters": {
+        "agents": "[{\"ordId\":\"customer.build:agent:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"Birthday Email Agent\"}]",
+        "agentName": "{\"ordId\":\"customer.build:agent:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"Birthday Email Agent\"}",
+        "chatInput": "={{ 'Write a warm and cheerful birthday greeting email for ' + $json.employeeName + '. Address them by first name. Keep it to 3-4 sentences. Return only the email body text, no subject line.' }}",
+        "sessionId": "={{ $json.employeeEmail }}"
+      }
+    },
+    {
+      "id": "node-bd-check-agent",
+      "name": "Check Agent Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "bd-success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-bd-respond-error",
+      "name": "Respond — Agent Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1080, 460],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"error\", \"message\": \"Agent failed to generate birthday email\" } }}",
+        "options": {
+          "responseCode": 500
+        }
+      }
+    },
+    {
+      "id": "node-bd-log-email",
+      "name": "Log Birthday Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// LOG_BIRTHDAY_EMAIL: Replace this node with actual email sending when email provider is configured\nconst employeeName = $('Extract Employee Fields').item.json.employeeName;\nconst employeeEmail = $('Extract Employee Fields').item.json.employeeEmail;\nconst dateOfBirth = $('Extract Employee Fields').item.json.dateOfBirth;\nconst emailBody = $json.response || '(email body not available)';\nconst subject = `Happy Birthday, ${employeeName}! 🎂`;\n\nconsole.log(`[BIRTHDAY EMAIL LOG]`);\nconsole.log(`To: ${employeeName} <${employeeEmail}>`);\nconsole.log(`Subject: ${subject}`);\nconsole.log(`Date of Birth: ${dateOfBirth}`);\nconsole.log(`Body: ${emailBody}`);\n\nreturn [{ json: {\n  status: 'logged',\n  employee: employeeName,\n  email: employeeEmail,\n  subject,\n  dateOfBirth,\n  emailBody\n} }];"
+      }
+    },
+    {
+      "id": "node-bd-respond-success",
+      "name": "Respond — Sent",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1300, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"logged\", \"employee\": $json.employee } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "node-bd-sticky",
+      "name": "Sticky Note — Email Logging",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [860, 160],
+      "parameters": {
+        "content": "This configuration is hardcoded — the values in this node reflect what you provided. Replace the Log node with a Microsoft Outlook or other email node when an email provider is configured.",
+        "width": 380,
+        "height": 100
+      }
+    }
+  ],
+  "connections": {
+    "Birthday Greeting Email Received": {
+      "main": [
+        [{ "node": "Extract Employee Fields", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Employee Fields": {
+      "main": [
+        [{ "node": "Generate Birthday Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate Birthday Email": {
+      "main": [
+        [{ "node": "Check Agent Success", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Agent Success": {
+      "main": [
+        [{ "node": "Log Birthday Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond — Agent Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Birthday Email": {
+      "main": [
+        [{ "node": "Respond — Sent", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {
+    "Generate Birthday Email": [
+      {
+        "success": true,
+        "agentName": "Birthday Email Agent",
+        "ordId": "customer.build:agent:employee-greeting-5f068.birthday-email-agent:v1",
+        "globalTenantId": null,
+        "messageId": "msg-birthday-001",
+        "sessionId": "shekhar.chandra@test-server.com",
+        "blocking": true,
+        "response": "Dear Shekhar, wishing you a very happy birthday filled with joy and laughter! On this special day, we want you to know how much you are appreciated and valued by the entire team. May this year bring you wonderful new achievements both personally and professionally. Have a fantastic birthday!",
+        "timestamp": "2025-01-01T09:00:00.000Z"
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,0 +1,32 @@
+apiVersion: asset.sap/v1
+kind: Asset
+
+metadata:
+  name: work-anniversary-email-workflow
+  type: n8nworkflow
+  version: "1.0.0"
+  description: "Sub-workflow: receives an employee record, uses SAP Agent to generate a personalized work anniversary email body, and logs it."
+
+sourceRoot: "."
+
+workflow:
+  definitionFile: work-anniversary-email-workflow.n8n.json
+  name: work-anniversary-email-workflow
+  ordId: sap.btpn8n:apiResource:ManagedN8nMcpServer:v1
+
+requires:
+  - name: anniversary-email-agent
+    kind: agent
+    ordId: customer.build:agent:employee-greeting-5f068.anniversary-email-agent:v1
+
+provides:
+  apis:
+    - name: work_anniversary_email_received
+      path: /work-anniversary-email
+      kind: rest
+      description: Receives employee name, email, and dateOfJoining to generate and log a work anniversary greeting
+      ordId: sap.n8nwfrt:apiResource:employee-greeting-5f068_work-anniversary-email-workflow.workAnniversaryEmailReceived:v1
+    - name: work_anniversary_email_received_mcp_server
+      kind: mcp-server
+      description: MCP server for work anniversary email operations
+      ordId: sap.n8nwfrt:apiResource:employee-greeting-5f068_work-anniversary-email-workflow.workAnniversaryEmailReceivedMcpServer:v1

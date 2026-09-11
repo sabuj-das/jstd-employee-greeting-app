@@ -1,0 +1,384 @@
+{
+  "name": "Employee Greeting Orchestrator",
+  "description": "Receives a semicolon-delimited CSV of employees via webhook, uses a SAP Agent to determine which employees have a work anniversary or birthday today, then routes each matched employee to the appropriate greeting sub-workflow and returns a summary report.",
+  "nodes": [
+    {
+      "id": "node-csv-upload",
+      "name": "CSV Upload",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "csv-upload",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "node-parse-csv",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Parse semicolon-delimited CSV from the uploaded body\n// Expected columns: name;email;dateOfJoining;dateOfBirth\n\nconst REQUIRED_COLUMNS = ['name', 'email', 'dateOfJoining', 'dateOfBirth'];\n\nconst rawBody = $('CSV Upload').first().json.body;\n\n// Support both string body and base64-encoded body\nlet csvText = '';\nif (typeof rawBody === 'string') {\n  csvText = rawBody;\n} else if (rawBody && typeof rawBody === 'object') {\n  // Try common field names for uploaded file content\n  const keys = Object.keys(rawBody);\n  const firstValue = rawBody[keys[0]];\n  if (typeof firstValue === 'string') {\n    csvText = firstValue;\n  } else {\n    throw new Error('M1.missed: CSV upload failed — could not extract text content from body');\n  }\n}\n\nif (!csvText || csvText.trim().length === 0) {\n  throw new Error('M1.missed: CSV upload failed — empty body received');\n}\n\nconst lines = csvText.trim().split('\\n').map(l => l.trim()).filter(l => l.length > 0);\n\nif (lines.length < 2) {\n  throw new Error('M1.missed: CSV upload failed — file must contain a header row and at least one data row');\n}\n\nconst headers = lines[0].split(';').map(h => h.trim().toLowerCase());\n\n// Validate all required columns exist\nfor (const col of REQUIRED_COLUMNS) {\n  if (!headers.includes(col.toLowerCase())) {\n    throw new Error(`M1.missed: CSV upload failed — missing required column: ${col}`);\n  }\n}\n\nconst employees = [];\nfor (let i = 1; i < lines.length; i++) {\n  const values = lines[i].split(';').map(v => v.trim());\n  const row = {};\n  headers.forEach((h, idx) => { row[h] = values[idx] || ''; });\n  employees.push({\n    name: row['name'],\n    email: row['email'],\n    dateOfJoining: row['dateofjoining'],\n    dateOfBirth: row['dateofbirth']\n  });\n}\n\nconsole.log(`M1.achieved: CSV uploaded and parsed successfully — ${employees.length} employee rows extracted`);\n\nreturn [{ json: { employees, totalEmployees: employees.length } }];"
+      }
+    },
+    {
+      "id": "node-split-employees",
+      "name": "Split Employees",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [640, 300],
+      "parameters": {
+        "fieldToSplitOut": "employees",
+        "include": "noOtherFields"
+      }
+    },
+    {
+      "id": "node-date-match-agent",
+      "name": "Date Match Agent",
+      "type": "CUSTOM.sapAgent",
+      "typeVersion": 1,
+      "position": [860, 300],
+      "parameters": {
+        "agents": "[{\"ordId\":\"customer.build:agent:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"Date Match Agent\"}]",
+        "agentName": "{\"ordId\":\"customer.build:agent:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"Date Match Agent\"}",
+        "chatInput": "={{ 'Today is ' + new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}) + '. Employee data: name=' + $json.name + ', email=' + $json.email + ', dateOfJoining=' + $json.dateOfJoining + ', dateOfBirth=' + $json.dateOfBirth + '. Compare DD.MM of dateOfJoining and DD.MM of dateOfBirth with today DD.MM. Return ONLY valid JSON with exactly these fields: {\"name\": string, \"email\": string, \"dateOfJoining\": string, \"dateOfBirth\": string, \"anniversaryMatch\": boolean, \"birthdayMatch\": boolean}. No commentary, no markdown, only raw JSON.' }}",
+        "sessionId": "={{ $json.email }}"
+      }
+    },
+    {
+      "id": "node-parse-agent-response",
+      "name": "Parse Agent Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Parse the SAP Agent JSON response into structured fields\nconst agentResponse = $json.response;\n\nlet parsed;\ntry {\n  if (typeof agentResponse === 'string') {\n    // Strip markdown code fences if present\n    const cleaned = agentResponse.replace(/```json\\s*/gi, '').replace(/```\\s*/gi, '').trim();\n    parsed = JSON.parse(cleaned);\n  } else if (typeof agentResponse === 'object' && agentResponse !== null) {\n    parsed = agentResponse;\n  } else {\n    throw new Error('Unexpected response type: ' + typeof agentResponse);\n  }\n} catch (e) {\n  // If parsing fails, default both matches to false so the employee is skipped\n  console.error(`M2.missed: Agent evaluation parse error for ${$json.agentName}: ${e.message}`);\n  return [{ json: { name: '', email: '', dateOfJoining: '', dateOfBirth: '', anniversaryMatch: false, birthdayMatch: false } }];\n}\n\nreturn [{ json: {\n  name: parsed.name || '',\n  email: parsed.email || '',\n  dateOfJoining: parsed.dateOfJoining || '',\n  dateOfBirth: parsed.dateOfBirth || '',\n  anniversaryMatch: parsed.anniversaryMatch === true,\n  birthdayMatch: parsed.birthdayMatch === true\n} }];"
+      }
+    },
+    {
+      "id": "node-keep-matches",
+      "name": "Keep Matches Only",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [1300, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-anniversary",
+              "leftValue": "={{ $json.anniversaryMatch }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            },
+            {
+              "id": "cond-birthday",
+              "leftValue": "={{ $json.birthdayMatch }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "or"
+        }
+      }
+    },
+    {
+      "id": "node-route-greeting",
+      "name": "Route Greeting Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [1520, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "outputKey": "Anniversary Only",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.anniversaryMatch }}",
+                    "rightValue": true,
+                    "operator": { "type": "boolean", "operation": "true" }
+                  },
+                  {
+                    "leftValue": "={{ $json.birthdayMatch }}",
+                    "rightValue": false,
+                    "operator": { "type": "boolean", "operation": "false" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "Birthday Only",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.birthdayMatch }}",
+                    "rightValue": true,
+                    "operator": { "type": "boolean", "operation": "true" }
+                  },
+                  {
+                    "leftValue": "={{ $json.anniversaryMatch }}",
+                    "rightValue": false,
+                    "operator": { "type": "boolean", "operation": "false" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "Both",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.anniversaryMatch }}",
+                    "rightValue": true,
+                    "operator": { "type": "boolean", "operation": "true" }
+                  },
+                  {
+                    "leftValue": "={{ $json.birthdayMatch }}",
+                    "rightValue": true,
+                    "operator": { "type": "boolean", "operation": "true" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "No Match"
+        }
+      }
+    },
+    {
+      "id": "node-log-anniversary",
+      "name": "Log Anniversary Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 140],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// LOG_WORK_ANNIVERSARY_EMAIL: Replace this node with actual email sending when email provider is configured\nconst name = $json.name;\nconst email = $json.email;\nconst dateOfJoining = $json.dateOfJoining;\nconsole.log(`[ANNIVERSARY EMAIL] Would send Work Anniversary email to: ${name} <${email}>, dateOfJoining: ${dateOfJoining}`);\nreturn [{ json: { name, email, type: 'anniversary', logged: true } }];"
+      }
+    },
+    {
+      "id": "node-log-birthday",
+      "name": "Log Birthday Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// LOG_BIRTHDAY_EMAIL: Replace this node with actual email sending when email provider is configured\nconst name = $json.name;\nconst email = $json.email;\nconst dateOfBirth = $json.dateOfBirth;\nconsole.log(`[BIRTHDAY EMAIL] Would send Birthday Greeting email to: ${name} <${email}>, dateOfBirth: ${dateOfBirth}`);\nreturn [{ json: { name, email, type: 'birthday', logged: true } }];"
+      }
+    },
+    {
+      "id": "node-log-anniversary-both",
+      "name": "Log Anniversary Email (Both)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1740, 460],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// LOG_WORK_ANNIVERSARY_EMAIL (dual-match): Replace this node with actual email sending when email provider is configured\nconst name = $json.name;\nconst email = $json.email;\nconst dateOfJoining = $json.dateOfJoining;\nconsole.log(`[ANNIVERSARY EMAIL] Would send Work Anniversary email to: ${name} <${email}>, dateOfJoining: ${dateOfJoining}`);\nreturn [{ json: { name, email, type: 'anniversary', logged: true } }];"
+      }
+    },
+    {
+      "id": "node-log-birthday-both",
+      "name": "Log Birthday Email (Both)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1960, 460],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// LOG_BIRTHDAY_EMAIL (dual-match): Replace this node with actual email sending when email provider is configured\nconst name = $json.name;\nconst email = $json.email;\nconst dateOfBirth = $json.dateOfBirth;\nconsole.log(`[BIRTHDAY EMAIL] Would send Birthday Greeting email to: ${name} <${email}>, dateOfBirth: ${dateOfBirth}`);\nreturn [{ json: { name, email, type: 'birthday', logged: true } }];"
+      }
+    },
+    {
+      "id": "node-merge-dispatch",
+      "name": "Merge Dispatch Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [2180, 300],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 3
+      }
+    },
+    {
+      "id": "node-aggregate-results",
+      "name": "Aggregate All Results",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [2400, 300],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "dispatchedEmails"
+      }
+    },
+    {
+      "id": "node-build-summary",
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2620, 300],
+      "executeOnce": true,
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Build summary report of all logged emails\nconst emails = $input.all().map(i => i.json).filter(i => i.dispatchedEmails);\n\nlet allDispatched = [];\nfor (const item of $input.all()) {\n  const dispatched = item.json.dispatchedEmails;\n  if (Array.isArray(dispatched)) {\n    allDispatched = allDispatched.concat(dispatched);\n  }\n}\n\nconst totalEmails = allDispatched.length;\nconst anniversaryCount = allDispatched.filter(e => e.type === 'anniversary').length;\nconst birthdayCount = allDispatched.filter(e => e.type === 'birthday').length;\n\n// Count unique input employees from Parse CSV node\nconst totalInput = $('Parse CSV').first().json.totalEmployees || 0;\n\nconsole.log(`M4.achieved: All greeting emails logged successfully — ${totalEmails} emails logged (${anniversaryCount} anniversary, ${birthdayCount} birthday) for ${totalInput} input employees`);\n\nreturn [{ json: {\n  summary: {\n    totalInputEmployees: totalInput,\n    totalEmailsLogged: totalEmails,\n    anniversaryEmailsLogged: anniversaryCount,\n    birthdayEmailsLogged: birthdayCount,\n    details: allDispatched\n  }\n} }];"
+      }
+    },
+    {
+      "id": "node-respond-success",
+      "name": "Respond — Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [2840, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.summary }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "node-sticky-parse",
+      "name": "Sticky Note — Parse CSV",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [420, 160],
+      "parameters": {
+        "content": "This configuration is hardcoded — the values in this node reflect what you provided. If this data is maintained in a connected system, replace this node with a live lookup when that integration is available. For now, update the values in this node directly when they change.",
+        "width": 380,
+        "height": 100
+      }
+    },
+    {
+      "id": "node-sticky-log",
+      "name": "Sticky Note — Email Logging",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1740, 20],
+      "parameters": {
+        "content": "Email sending is currently replaced with console logging. Replace the Log nodes with actual email nodes (e.g. Microsoft Outlook) when an email provider is configured.",
+        "width": 460,
+        "height": 80
+      }
+    }
+  ],
+  "connections": {
+    "CSV Upload": {
+      "main": [
+        [{ "node": "Parse CSV", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [{ "node": "Split Employees", "type": "main", "index": 0 }]
+      ]
+    },
+    "Split Employees": {
+      "main": [
+        [{ "node": "Date Match Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "Date Match Agent": {
+      "main": [
+        [{ "node": "Parse Agent Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parse Agent Response": {
+      "main": [
+        [{ "node": "Keep Matches Only", "type": "main", "index": 0 }]
+      ]
+    },
+    "Keep Matches Only": {
+      "main": [
+        [{ "node": "Route Greeting Type", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route Greeting Type": {
+      "main": [
+        [{ "node": "Log Anniversary Email", "type": "main", "index": 0 }],
+        [{ "node": "Log Birthday Email", "type": "main", "index": 0 }],
+        [{ "node": "Log Anniversary Email (Both)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Anniversary Email": {
+      "main": [
+        [{ "node": "Merge Dispatch Results", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Birthday Email": {
+      "main": [
+        [{ "node": "Merge Dispatch Results", "type": "main", "index": 1 }]
+      ]
+    },
+    "Log Anniversary Email (Both)": {
+      "main": [
+        [{ "node": "Log Birthday Email (Both)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Birthday Email (Both)": {
+      "main": [
+        [{ "node": "Merge Dispatch Results", "type": "main", "index": 2 }]
+      ]
+    },
+    "Merge Dispatch Results": {
+      "main": [
+        [{ "node": "Aggregate All Results", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aggregate All Results": {
+      "main": [
+        [{ "node": "Build Summary", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Summary": {
+      "main": [
+        [{ "node": "Respond — Success", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {
+    "Date Match Agent": [
+      {
+        "success": true,
+        "agentName": "Date Match Agent",
+        "ordId": "customer.build:agent:employee-greeting-5f068.date-match-agent:v1",
+        "globalTenantId": null,
+        "messageId": "msg-001",
+        "sessionId": "shekhar.chandra@test-server.com",
+        "blocking": true,
+        "response": "{\"name\":\"Shekhar Chandra\",\"email\":\"shekhar.chandra@test-server.com\",\"dateOfJoining\":\"01.01.2020\",\"dateOfBirth\":\"15.03.1990\",\"anniversaryMatch\":true,\"birthdayMatch\":false}",
+        "timestamp": "2025-01-01T09:00:00.000Z"
+      }
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

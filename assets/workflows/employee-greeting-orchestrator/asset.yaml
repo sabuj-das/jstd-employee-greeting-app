@@ -1,0 +1,32 @@
+apiVersion: asset.sap/v1
+kind: Asset
+
+metadata:
+  name: employee-greeting-orchestrator
+  type: n8nworkflow
+  version: "1.0.0"
+  description: "Main orchestrator: accepts CSV of employees, uses SAP Agent for date matching, routes to anniversary and birthday sub-workflows, and returns a summary report."
+
+sourceRoot: "."
+
+workflow:
+  definitionFile: employee-greeting-orchestrator.n8n.json
+  name: employee-greeting-orchestrator
+  ordId: sap.btpn8n:apiResource:ManagedN8nMcpServer:v1
+
+requires:
+  - name: date-match-agent
+    kind: agent
+    ordId: customer.build:agent:employee-greeting-5f068.date-match-agent:v1
+
+provides:
+  apis:
+    - name: csv_upload
+      path: /csv-upload
+      kind: rest
+      description: Accepts a semicolon-delimited CSV file of employees and triggers the greeting matching and dispatch process
+      ordId: sap.n8nwfrt:apiResource:employee-greeting-5f068_employee-greeting-orchestrator.csvUpload:v1
+    - name: csv_upload_mcp_server
+      kind: mcp-server
+      description: MCP server for CSV upload operations
+      ordId: sap.n8nwfrt:apiResource:employee-greeting-5f068_employee-greeting-orchestrator.csvUploadMcpServer:v1

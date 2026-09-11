@@ -1,0 +1,228 @@
+{
+    "name": "Work Anniversary Email Workflow",
+    "description": "Receives employee data from the orchestrator for employees whose work anniversary (DD.MM of dateOfJoining) matches today. Uses a SAP Agent to generate a personalized anniversary email body, then logs the email. Replace the log node with an email node when a provider is configured.",
+    "nodes": [
+        {
+            "id": "node-wa-trigger",
+            "name": "Work Anniversary Email Received",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                200,
+                300
+            ],
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "work-anniversary-email",
+                "responseMode": "responseNode"
+            }
+        },
+        {
+            "id": "node-wa-calc-tenure",
+            "name": "Calculate Tenure",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                300
+            ],
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "// Calculate years of service from dateOfJoining (DD.MM.YYYY)\nconst dateOfJoiningStr = $('Work Anniversary Email Received').item.json.body.dateOfJoining || '';\nconst employeeName = $('Work Anniversary Email Received').item.json.body.name || '';\nconst employeeEmail = $('Work Anniversary Email Received').item.json.body.email || '';\n\nif (!dateOfJoiningStr) {\n  throw new Error('dateOfJoining is missing from the request');\n}\n\n// Parse DD.MM.YYYY\nconst parts = dateOfJoiningStr.split('.');\nif (parts.length !== 3) {\n  throw new Error(`Invalid dateOfJoining format: ${dateOfJoiningStr}. Expected DD.MM.YYYY`);\n}\n\nconst day = parseInt(parts[0], 10);\nconst month = parseInt(parts[1], 10) - 1; // zero-indexed\nconst year = parseInt(parts[2], 10);\n\nconst joiningDate = new Date(year, month, day);\nconst today = new Date();\n\nlet yearsOfService = today.getFullYear() - joiningDate.getFullYear();\nconst monthDiff = today.getMonth() - joiningDate.getMonth();\nif (monthDiff < 0 || (monthDiff === 0 && today.getDate() < joiningDate.getDate())) {\n  yearsOfService--;\n}\n\nreturn [{ json: { employeeName, employeeEmail, dateOfJoining: dateOfJoiningStr, yearsOfService } }];"
+            }
+        },
+        {
+            "id": "node-wa-agent",
+            "name": "Generate Anniversary Email",
+            "type": "CUSTOM.sapAgent",
+            "typeVersion": 1,
+            "position": [
+                640,
+                300
+            ],
+            "parameters": {
+                "agents": "[{\"ordId\":\"customer.build:agent:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"Anniversary Email Agent\"}]",
+                "agentName": "{\"ordId\":\"customer.build:agent:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"Anniversary Email Agent\"}",
+                "chatInput": "={{ 'Write a warm and sincere work anniversary email congratulating ' + $json.employeeName + ' on completing ' + $json.yearsOfService + ' year(s) with the company. Address them by first name. Keep it to 3-4 sentences. Return only the email body text, no subject line.' }}",
+                "sessionId": "={{ $json.employeeEmail }}"
+            }
+        },
+        {
+            "id": "node-wa-check-agent",
+            "name": "Check Agent Success",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                860,
+                300
+            ],
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": false,
+                        "leftValue": "",
+                        "typeValidation": "loose"
+                    },
+                    "conditions": [
+                        {
+                            "id": "wa-success-check",
+                            "leftValue": "={{ $json.success }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                }
+            }
+        },
+        {
+            "id": "node-wa-log-email",
+            "name": "Log Anniversary Email",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1080,
+                300
+            ],
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "// LOG_ANNIVERSARY_EMAIL: Replace this node with actual email sending when email provider is configured\nconst employeeName = $('Calculate Tenure').item.json.employeeName;\nconst employeeEmail = $('Calculate Tenure').item.json.employeeEmail;\nconst yearsOfService = $('Calculate Tenure').item.json.yearsOfService;\nconst emailBody = $json.response || '(email body not available)';\nconst subject = `Happy Work Anniversary, ${employeeName}!`;\n\nconsole.log(`[ANNIVERSARY EMAIL LOG]`);\nconsole.log(`To: ${employeeName} <${employeeEmail}>`);\nconsole.log(`Subject: ${subject}`);\nconsole.log(`Years of Service: ${yearsOfService}`);\nconsole.log(`Body: ${emailBody}`);\n\nreturn [{ json: {\n  status: 'logged',\n  employee: employeeName,\n  email: employeeEmail,\n  subject,\n  yearsOfService,\n  emailBody\n} }];"
+            }
+        },
+        {
+            "id": "node-wa-respond-error",
+            "name": "Respond — Agent Error",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1080,
+                460
+            ],
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"status\": \"error\", \"message\": \"Agent failed to generate anniversary email\" } }}",
+                "options": {
+                    "responseCode": 500
+                }
+            }
+        },
+        {
+            "id": "node-wa-respond-success",
+            "name": "Respond — Sent",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1300,
+                300
+            ],
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"status\": \"logged\", \"employee\": $json.employee } }}",
+                "options": {
+                    "responseCode": 200
+                }
+            }
+        },
+        {
+            "id": "node-wa-sticky",
+            "name": "Sticky Note — Email Logging",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                860,
+                160
+            ],
+            "parameters": {
+                "content": "This configuration is hardcoded — the values in this node reflect what you provided. Replace the Log node with a Microsoft Outlook or other email node when an email provider is configured.",
+                "width": 380,
+                "height": 100
+            }
+        }
+    ],
+    "connections": {
+        "Work Anniversary Email Received": {
+            "main": [
+                [
+                    {
+                        "node": "Calculate Tenure",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Calculate Tenure": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Anniversary Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Anniversary Email": {
+            "main": [
+                [
+                    {
+                        "node": "Check Agent Success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Agent Success": {
+            "main": [
+                [
+                    {
+                        "node": "Log Anniversary Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Respond — Agent Error",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Log Anniversary Email": {
+            "main": [
+                [
+                    {
+                        "node": "Respond — Sent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {
+        "Generate Anniversary Email": [
+            {
+                "success": true,
+                "agentName": "Anniversary Email Agent",
+                "ordId": "customer.build:agent:employee-greeting-5f068.anniversary-email-agent:v1",
+                "globalTenantId": null,
+                "messageId": "msg-anniversary-001",
+                "sessionId": "shekhar.chandra@test-server.com",
+                "blocking": true,
+                "response": "Dear Shekhar, congratulations on completing 5 wonderful years with our company! Your dedication and contributions have been truly invaluable to the team. We are so grateful to have you with us, and we look forward to many more successful years together. Happy Work Anniversary!",
+                "timestamp": "2025-01-01T09:00:00.000Z"
+            }
+        ]
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "id": "306fBWnCW0lWqR3l"
+}

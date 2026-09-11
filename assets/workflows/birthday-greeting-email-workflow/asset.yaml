@@ -1,0 +1,32 @@
+apiVersion: asset.sap/v1
+kind: Asset
+
+metadata:
+  name: birthday-greeting-email-workflow
+  type: n8nworkflow
+  version: "1.0.0"
+  description: "Sub-workflow: receives an employee record, uses SAP Agent to generate a personalized birthday greeting email body, and logs it."
+
+sourceRoot: "."
+
+workflow:
+  definitionFile: birthday-greeting-email-workflow.n8n.json
+  name: birthday-greeting-email-workflow
+  ordId: sap.btpn8n:apiResource:ManagedN8nMcpServer:v1
+
+requires:
+  - name: birthday-email-agent
+    kind: agent
+    ordId: customer.build:agent:employee-greeting-5f068.birthday-email-agent:v1
+
+provides:
+  apis:
+    - name: birthday_greeting_email_received
+      path: /birthday-greeting-email
+      kind: rest
+      description: Receives employee name, email, and dateOfBirth to generate and log a birthday greeting
+      ordId: sap.n8nwfrt:apiResource:employee-greeting-5f068_birthday-greeting-email-workflow.birthdayGreetingEmailReceived:v1
+    - name: birthday_greeting_email_received_mcp_server
+      kind: mcp-server
+      description: MCP server for birthday greeting email operations
+      ordId: sap.n8nwfrt:apiResource:employee-greeting-5f068_birthday-greeting-email-workflow.birthdayGreetingEmailReceivedMcpServer:v1

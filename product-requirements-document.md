@@ -5,7 +5,7 @@
 **Owner:** HR Department  
 **Solution Category:** n8n Workflow (with SAP Agent for AI-based greeting logic)
 
----
+* * *
 
 ## Product Purpose & Value Proposition
 
@@ -15,25 +15,33 @@ HR employees have no reliable, automated way to ensure every employee receives a
 **Business Need:**  
 Today, remembering and manually sending work anniversary and birthday greetings is entirely dependent on individual HR staff. This creates inconsistency: some employees receive greetings, others do not, and the effort to track these dates manually is prone to oversight. A reliable, automated system is needed to ensure every milestone is acknowledged.
 
-**Expected Value:**  
-- 100% of employees with a birthday or work anniversary on any given day receive a greeting email
-- HR time spent on manual greeting tracking and email composition is eliminated
-- Employee engagement and sense of recognition is improved through consistent, timely communication
+**Expected Value:**
+
+-   100% of employees with a birthday or work anniversary on any given day receive a greeting email
+    
+-   HR time spent on manual greeting tracking and email composition is eliminated
+    
+-   Employee engagement and sense of recognition is improved through consistent, timely communication
+    
 
 **Product Objectives (Prioritized):**
-1. Ensure no employee anniversary or birthday is ever missed — 100% milestone coverage
-2. Reduce HR manual effort for greeting communications to near zero
-3. Maintain HR oversight through an approval gate before any email is sent
 
----
+1.  Ensure no employee anniversary or birthday is ever missed — 100% milestone coverage
+    
+2.  Reduce HR manual effort for greeting communications to near zero
+    
+3.  Maintain HR oversight through an approval gate before any email is sent
+    
+
+* * *
 
 ## Business Metrics
 
 | Metric | Baseline | Target | Timeline | Process / Capability | Source |
-|--------|----------|--------|----------|----------------------|--------|
+| --- | --- | --- | --- | --- | --- |
 | Employees with anniversary/birthday receiving a greeting email | — | 100% coverage, zero missed | — | HR Employee Engagement | user |
 
----
+* * *
 
 ## User Profiles & Personas
 
@@ -42,70 +50,105 @@ Today, remembering and manually sending work anniversary and birthday greetings 
 Maya is a 34-year-old HR Generalist responsible for employee engagement and day-to-day HR operations. Each morning she checks which employees have milestones coming up, manually drafts congratulatory emails, and sends them — a task that takes 20–40 minutes daily and is easy to forget on busy days. She is comfortable with basic digital tools but is not technical. She needs a simple, reliable process where she uploads one file and reviews a list before anything is sent — she does not want automated emails going out without her knowledge.
 
 **Goals:**
-- Ensure every employee with a birthday or work anniversary today receives a greeting
-- Spend minimal time on this task while maintaining control over what goes out
+
+-   Ensure every employee with a birthday or work anniversary today receives a greeting
+    
+-   Spend minimal time on this task while maintaining control over what goes out
+    
 
 **Key Tasks:**
-- Upload the employee CSV file via a provided link or form
-- Review the list of matched employees and the proposed greeting type
-- Approve the send list so emails are dispatched
+
+-   Upload the employee CSV file via a provided link or form
+    
+-   Review the list of matched employees and the proposed greeting type
+    
+-   Approve the send list so emails are dispatched
+    
 
 ### Secondary Persona: Employee (Recipient)
 
 Any employee in the organization. They receive a personalized greeting email on their work anniversary or birthday. They have no interaction with the system — they are the beneficiary. Their experience should feel personal and timely, not automated or generic.
 
----
+* * *
 
 ## User Goals & Tasks
 
 ### For Maya (HR Generalist):
 
 **Goals:**
-- Trigger the greeting workflow by uploading the employee CSV once per day (or as needed)
-- Review and approve matched employees before emails go out
-- Have confidence that every employee with a milestone today has been identified
+
+-   Trigger the greeting workflow by uploading the employee CSV once per day (or as needed)
+    
+-   Review and approve matched employees before emails go out
+    
+-   Have confidence that every employee with a milestone today has been identified
+    
 
 **Key Tasks:**
-1. Upload a semicolon-delimited CSV file containing employee name, email, dateOfJoining, and dateOfBirth
-2. Review the list of employees matched by the AI agent (anniversary, birthday, or both)
-3. Approve the list to trigger email dispatch to all matched employees
 
----
+1.  Upload a semicolon-delimited CSV file containing employee name, email, dateOfJoining, and dateOfBirth
+    
+2.  Review the list of employees matched by the AI agent (anniversary, birthday, or both)
+    
+3.  Approve the list to trigger email dispatch to all matched employees
+    
+
+* * *
 
 ## Product Principles
 
-1. **HR stays in control**: No email is ever sent without explicit HR approval. The system proposes; HR decides.
-2. **Zero missed milestones**: The system must identify every employee whose DD.MM matches today — no false negatives acceptable.
-3. **Graceful handling of dual matches**: If an employee has both a birthday and a work anniversary on the same day, both emails are sent independently.
-4. **Simple input, powerful output**: The only input HR provides is a CSV file. All intelligence lives in the workflow.
-5. **Personalized, not generic**: Email content is generated by an AI agent and should feel tailored to the individual, not templated.
+1.  **HR stays in control**: No email is ever sent without explicit HR approval. The system proposes; HR decides.
+    
+2.  **Zero missed milestones**: The system must identify every employee whose DD.MM matches today — no false negatives acceptable.
+    
+3.  **Graceful handling of dual matches**: If an employee has both a birthday and a work anniversary on the same day, both emails are sent independently.
+    
+4.  **Simple input, powerful output**: The only input HR provides is a CSV file. All intelligence lives in the workflow.
+    
+5.  **Personalized, not generic**: Email content is generated by an AI agent and should feel tailored to the individual, not templated.
+    
 
----
+* * *
 
 ## Goals and Non-Goals
 
 ### Goals (In Scope)
 
-- Accept a semicolon-delimited CSV file upload via webhook trigger
-- Parse the CSV and extract employee name, email, dateOfJoining (DD.MM.YYYY), and dateOfBirth (DD.MM.YYYY)
-- Use an AI agent to compare the DD.MM portion of each date field against today's date
-- Route matched employees to a Work Anniversary sub-workflow and/or Birthday Greeting sub-workflow
-- Present matched employees to HR for review and approval before sending
-- Send a personalized Work Anniversary email for dateOfJoining matches
-- Send a personalized Birthday Greeting email for dateOfBirth matches
-- Support both emails being sent to the same employee if both dates match today
-- Silently skip employees with no date match
+-   Accept a semicolon-delimited CSV file upload via webhook trigger
+    
+-   Parse the CSV and extract employee name, email, dateOfJoining (DD.MM.YYYY), and dateOfBirth (DD.MM.YYYY)
+    
+-   Use an AI agent to compare the DD.MM portion of each date field against today's date
+    
+-   Route matched employees to a Work Anniversary sub-workflow and/or Birthday Greeting sub-workflow
+    
+-   Present matched employees to HR for review and approval before sending
+    
+-   Send a personalized Work Anniversary email for dateOfJoining matches
+    
+-   Send a personalized Birthday Greeting email for dateOfBirth matches
+    
+-   Support both emails being sent to the same employee if both dates match today
+    
+-   Silently skip employees with no date match
+    
 
 ### Non-Goals (Out of Scope)
 
-- Direct integration with SAP SuccessFactors or any HR system of record — CSV is the only data source
-- Scheduled or fully automated execution without HR uploading a file
-- Non-email notification channels (SMS, push, Teams, etc.)
-- Storing or persisting employee data beyond the scope of a single workflow run
-- Managing or editing email templates through a UI
-- Reporting or analytics on greeting history
+-   Direct integration with SAP SuccessFactors or any HR system of record — CSV is the only data source
+    
+-   Scheduled or fully automated execution without HR uploading a file
+    
+-   Non-email notification channels (SMS, push, Teams, etc.)
+    
+-   Storing or persisting employee data beyond the scope of a single workflow run
+    
+-   Managing or editing email templates through a UI
+    
+-   Reporting or analytics on greeting history
+    
 
----
+* * *
 
 ## Requirements
 
@@ -113,24 +156,39 @@ Any employee in the organization. They receive a personalized greeting email on 
 
 **R1: CSV Upload Trigger**
 
-- **Problem to Solve**: HR has no way to initiate the greeting workflow without a trigger mechanism.
-- **User Story**: As an HR employee, I need to upload a CSV file to start the greeting workflow so that the system can identify today's employee milestones.
-- **Acceptance Criteria**:
-  - Given HR submits a semicolon-delimited CSV file via the webhook endpoint, when the file is received, then the workflow starts and begins parsing the file.
-  - Given the CSV contains the columns name, email, dateOfJoining, dateOfBirth, when parsed, then all rows are available for processing.
-- **Maps to Objective**: Objective 1 — zero missed milestones
-- **Priority Rank**: 1
+-   **Problem to Solve**: HR has no way to initiate the greeting workflow without a trigger mechanism.
+    
+-   **User Story**: As an HR employee, I need to upload a CSV file to start the greeting workflow so that the system can identify today's employee milestones.
+    
+-   **Acceptance Criteria**:
+    
+    -   Given HR submits a semicolon-delimited CSV file via the webhook endpoint, when the file is received, then the workflow starts and begins parsing the file.
+        
+    -   Given the CSV contains the columns name, email, dateOfJoining, dateOfBirth, when parsed, then all rows are available for processing.
+        
+-   **Maps to Objective**: Objective 1 — zero missed milestones
+    
+-   **Priority Rank**: 1
+    
 
 **R2: AI-Based Date Matching per Employee**
 
-- **Problem to Solve**: The system must reliably determine, for each employee, whether today's DD.MM matches their work anniversary date, birthday, or both.
-- **User Story**: As an HR employee, I need the system to automatically identify which employees have a milestone today so that I do not have to check dates manually.
-- **Acceptance Criteria**:
-  - Given a parsed list of employees, when the AI agent evaluates each row, then it returns a determination of: anniversary match, birthday match, both, or neither.
-  - Given an employee where both DD.MM of dateOfJoining and dateOfBirth match today, when the agent evaluates, then both flags are set independently.
-  - Given an employee with no date match, when the agent evaluates, then the employee is excluded from the approval list.
-- **Maps to Objective**: Objective 1 — zero missed milestones
-- **Priority Rank**: 2
+-   **Problem to Solve**: The system must reliably determine, for each employee, whether today's DD.MM matches their work anniversary date, birthday, or both.
+    
+-   **User Story**: As an HR employee, I need the system to automatically identify which employees have a milestone today so that I do not have to check dates manually.
+    
+-   **Acceptance Criteria**:
+    
+    -   Given a parsed list of employees, when the AI agent evaluates each row, then it returns a determination of: anniversary match, birthday match, both, or neither.
+        
+    -   Given an employee where both DD.MM of dateOfJoining and dateOfBirth match today, when the agent evaluates, then both flags are set independently.
+        
+    -   Given an employee with no date match, when the agent evaluates, then the employee is excluded from the approval list.
+        
+-   **Maps to Objective**: Objective 1 — zero missed milestones
+    
+-   **Priority Rank**: 2
+    
 
 **R3: ~~HR Approval Gate~~ (Removed)**
 
@@ -138,35 +196,56 @@ Any employee in the organization. They receive a personalized greeting email on 
 
 **R4: Work Anniversary Sub-Workflow**
 
-- **Problem to Solve**: Employees who reach a work anniversary milestone need to receive a timely, personalized acknowledgement.
-- **User Story**: As an HR employee, I need the system to send a personalized work anniversary email to the relevant employee so that their milestone is acknowledged without me composing it manually.
-- **Acceptance Criteria**:
-  - Given an employee is matched on dateOfJoining DD.MM and HR has approved, when the anniversary sub-workflow is called, then a personalized work anniversary email is generated and sent to the employee's email address.
-  - Given the email is sent, when the workflow completes, then the send is confirmed and logged.
-- **Maps to Objective**: Objectives 1 and 2
-- **Priority Rank**: 4
+-   **Problem to Solve**: Employees who reach a work anniversary milestone need to receive a timely, personalized acknowledgement.
+    
+-   **User Story**: As an HR employee, I need the system to send a personalized work anniversary email to the relevant employee so that their milestone is acknowledged without me composing it manually.
+    
+-   **Acceptance Criteria**:
+    
+    -   Given an employee is matched on dateOfJoining DD.MM and HR has approved, when the anniversary sub-workflow is called, then a personalized work anniversary email is generated and sent to the employee's email address.
+        
+    -   Given the email is sent, when the workflow completes, then the send is confirmed and logged.
+        
+-   **Maps to Objective**: Objectives 1 and 2
+    
+-   **Priority Rank**: 4
+    
 
 **R5: Birthday Greeting Sub-Workflow**
 
-- **Problem to Solve**: Employees who have a birthday today need to receive a warm, personalized greeting.
-- **User Story**: As an HR employee, I need the system to send a personalized birthday greeting email to the relevant employee so that their birthday is recognized.
-- **Acceptance Criteria**:
-  - Given an employee is matched on dateOfBirth DD.MM and HR has approved, when the birthday sub-workflow is called, then a personalized birthday greeting email is generated and sent to the employee's email address.
-  - Given the email is sent, when the workflow completes, then the send is confirmed and logged.
-- **Maps to Objective**: Objectives 1 and 2
-- **Priority Rank**: 5
+-   **Problem to Solve**: Employees who have a birthday today need to receive a warm, personalized greeting.
+    
+-   **User Story**: As an HR employee, I need the system to send a personalized birthday greeting email to the relevant employee so that their birthday is recognized.
+    
+-   **Acceptance Criteria**:
+    
+    -   Given an employee is matched on dateOfBirth DD.MM and HR has approved, when the birthday sub-workflow is called, then a personalized birthday greeting email is generated and sent to the employee's email address.
+        
+    -   Given the email is sent, when the workflow completes, then the send is confirmed and logged.
+        
+-   **Maps to Objective**: Objectives 1 and 2
+    
+-   **Priority Rank**: 5
+    
 
 **R6: Dual Milestone Handling**
 
-- **Problem to Solve**: When an employee's birthday and work anniversary fall on the same calendar day, both greetings must be sent independently.
-- **User Story**: As an HR employee, I need the system to send both a birthday and a work anniversary email when both dates match today, so that neither milestone is overlooked.
-- **Acceptance Criteria**:
-  - Given an employee has both dateOfJoining DD.MM and dateOfBirth DD.MM matching today, when the orchestrator routes the employee, then both the anniversary sub-workflow and the birthday sub-workflow are called for that employee.
-  - Given both sub-workflows are triggered, when each completes, then two separate emails are dispatched to that employee.
-- **Maps to Objective**: Objective 1
-- **Priority Rank**: 6
+-   **Problem to Solve**: When an employee's birthday and work anniversary fall on the same calendar day, both greetings must be sent independently.
+    
+-   **User Story**: As an HR employee, I need the system to send both a birthday and a work anniversary email when both dates match today, so that neither milestone is overlooked.
+    
+-   **Acceptance Criteria**:
+    
+    -   Given an employee has both dateOfJoining DD.MM and dateOfBirth DD.MM matching today, when the orchestrator routes the employee, then both the anniversary sub-workflow and the birthday sub-workflow are called for that employee.
+        
+    -   Given both sub-workflows are triggered, when each completes, then two separate emails are dispatched to that employee.
+        
+-   **Maps to Objective**: Objective 1
+    
+-   **Priority Rank**: 6
+    
 
----
+* * *
 
 ## Solution Architecture
 
@@ -175,117 +254,177 @@ Three n8n workflows collaborate to deliver the solution. The Main Orchestrator h
 
 **Key Components:**
 
-- **Main Orchestrator Workflow**: Webhook trigger receives the CSV, extracts and loops over employee rows, calls the SAP Agent for date matching, collects matched employees, presents them to HR for approval, then calls the appropriate sub-workflow(s) per employee.
-- **Work Anniversary Sub-Workflow**: Receives employee data, uses SAP Agent to generate a personalized anniversary email body, and dispatches via the email node.
-- **Birthday Greeting Sub-Workflow**: Receives employee data, uses SAP Agent to generate a personalized birthday greeting email body, and dispatches via the email node.
-- **SAP Agent Node**: Used for (a) AI-based date comparison and routing decision and (b) personalized email content generation in each sub-workflow.
-- **Email Delivery Node**: Placeholder — Microsoft Outlook node is available; final email provider to be confirmed by HR/IT.
+-   **Main Orchestrator Workflow**: Webhook trigger receives the CSV, extracts and loops over employee rows, calls the SAP Agent for date matching, collects matched employees, presents them to HR for approval, then calls the appropriate sub-workflow(s) per employee.
+    
+-   **Work Anniversary Sub-Workflow**: Receives employee data, uses SAP Agent to generate a personalized anniversary email body, and dispatches via the email node.
+    
+-   **Birthday Greeting Sub-Workflow**: Receives employee data, uses SAP Agent to generate a personalized birthday greeting email body, and dispatches via the email node.
+    
+-   **SAP Agent Node**: Used for (a) AI-based date comparison and routing decision and (b) personalized email content generation in each sub-workflow.
+    
+-   **Email Delivery Node**: Placeholder — Microsoft Outlook node is available; final email provider to be confirmed by HR/IT.
+    
 
 **Integration Points:**
 
-- CSV file → Webhook (HTTP POST, one-time per HR upload, binary file payload)
-- Main Orchestrator → Work Anniversary Sub-Workflow (webhook call with employee payload)
-- Main Orchestrator → Birthday Greeting Sub-Workflow (webhook call with employee payload)
+-   CSV file → Webhook (HTTP POST, one-time per HR upload, binary file payload)
+    
+-   Main Orchestrator → Work Anniversary Sub-Workflow (webhook call with employee payload)
+    
+-   Main Orchestrator → Birthday Greeting Sub-Workflow (webhook call with employee payload)
+    
 
 **Deployment Environments:**
 
-- Single n8n instance; workflows are activated and run on demand triggered by HR file upload.
+-   Single n8n instance; workflows are activated and run on demand triggered by HR file upload.
+    
 
----
+* * *
 
 ### Automation & Agent Behaviour
 
 **Automation Level:** Hybrid — rule-based CSV parsing and routing, AI-assisted date matching and content generation, human approval gate before action
 
 **Actions the system performs without human approval:**
-- Parsing the uploaded CSV file
-- Evaluating each employee row for date matches (AI agent decision)
-- Building the list of matched employees for HR review
+
+-   Parsing the uploaded CSV file
+    
+-   Evaluating each employee row for date matches (AI agent decision)
+    
+-   Building the list of matched employees for HR review
+    
 
 **Actions that require human review or approval:**
-- None at this time — the approval step has been removed. Greeting emails are dispatched automatically once date matching is complete.
+
+-   None at this time — the approval step has been removed. Greeting emails are dispatched automatically once date matching is complete.
+    
 
 **Model or engine used:** SAP AI Core via SAP Agent node (SAP Generative AI Hub)
 
 **Knowledge & data sources accessed:**
-- CSV file uploaded by HR (employee name, email, dateOfJoining, dateOfBirth)
-- System current date (used for DD.MM comparison)
+
+-   CSV file uploaded by HR (employee name, email, dateOfJoining, dateOfBirth)
+    
+-   System current date (used for DD.MM comparison)
+    
 
 **Tools or connectors invoked:**
-- SAP Agent (date matching decision): evaluates each employee row and returns anniversary/birthday/both/none classification
-- SAP Agent (email content generation): generates personalized email body text for anniversary and birthday emails
-- Email delivery node (send): dispatches the generated email to the employee — requires HR approval before execution
-- Work Anniversary Sub-Workflow: called by orchestrator with employee payload when anniversary match is confirmed
-- Birthday Greeting Sub-Workflow: called by orchestrator with employee payload when birthday match is confirmed
+
+-   SAP Agent (date matching decision): evaluates each employee row and returns anniversary/birthday/both/none classification
+    
+-   SAP Agent (email content generation): generates personalized email body text for anniversary and birthday emails
+    
+-   Email delivery node (send): dispatches the generated email to the employee — requires HR approval before execution
+    
+-   Work Anniversary Sub-Workflow: called by orchestrator with employee payload when anniversary match is confirmed
+    
+-   Birthday Greeting Sub-Workflow: called by orchestrator with employee payload when birthday match is confirmed
+    
 
 **Guardrails & fail-safes:**
-- No email is ever sent without HR approval — the workflow halts at the approval gate until a response is received
-- Employees with no date match are silently skipped and not included in the approval list
-- If the CSV is malformed or missing required columns, the workflow should stop and return an error to the HR employee
-- If the email delivery fails, the failure is logged and HR is notified; no silent failures
 
----
+-   No email is ever sent without HR approval — the workflow halts at the approval gate until a response is received
+    
+-   Employees with no date match are silently skipped and not included in the approval list
+    
+-   If the CSV is malformed or missing required columns, the workflow should stop and return an error to the HR employee
+    
+-   If the email delivery fails, the failure is logged and HR is notified; no silent failures
+    
+
+* * *
 
 ## Milestones
 
 ### M1: CSV Uploaded
 
-- **Description**: HR has successfully uploaded a valid semicolon-delimited CSV file and the workflow has been triggered.
-- **Achieved when**: The webhook receives the CSV payload, the file is parsed without errors, and at least one employee row is extracted.
-- **Log on achievement**: `M1.achieved: CSV uploaded and parsed successfully — {n} employee rows extracted`
-- **Log on miss**: `M1.missed: CSV upload failed or file could not be parsed — workflow halted`
+-   **Description**: HR has successfully uploaded a valid semicolon-delimited CSV file and the workflow has been triggered.
+    
+-   **Achieved when**: The webhook receives the CSV payload, the file is parsed without errors, and at least one employee row is extracted.
+    
+-   **Log on achievement**: `M1.achieved: CSV uploaded and parsed successfully — {n} employee rows extracted`
+    
+-   **Log on miss**: `M1.missed: CSV upload failed or file could not be parsed — workflow halted`
+    
 
 ### M2: AI Matching Complete
 
-- **Description**: The SAP Agent has evaluated every employee row and produced a date-match classification for each.
-- **Achieved when**: All rows have been processed by the agent and a classification (anniversary / birthday / both / none) has been assigned to each employee.
-- **Log on achievement**: `M2.achieved: AI matching complete — {n} employees matched (anniversary: {a}, birthday: {b}, both: {c})`
-- **Log on miss**: `M2.missed: Agent evaluation did not complete — one or more rows could not be classified`
+-   **Description**: The SAP Agent has evaluated every employee row and produced a date-match classification for each.
+    
+-   **Achieved when**: All rows have been processed by the agent and a classification (anniversary / birthday / both / none) has been assigned to each employee.
+    
+-   **Log on achievement**: `M2.achieved: AI matching complete — {n} employees matched (anniversary: {a}, birthday: {b}, both: {c})`
+    
+-   **Log on miss**: `M2.missed: Agent evaluation did not complete — one or more rows could not be classified`
+    
 
 ### M3: HR Approval Done
 
-- **Description**: HR has reviewed the matched employee list and approved the send.
-- **Achieved when**: HR submits an explicit approval response in the workflow.
-- **Log on achievement**: `M3.achieved: HR approval received — {n} employees approved for greeting dispatch`
-- **Log on miss**: `M3.missed: HR approval not received within timeout or was rejected — no emails sent`
+-   **Description**: HR has reviewed the matched employee list and approved the send.
+    
+-   **Achieved when**: HR submits an explicit approval response in the workflow.
+    
+-   **Log on achievement**: `M3.achieved: HR approval received — {n} employees approved for greeting dispatch`
+    
+-   **Log on miss**: `M3.missed: HR approval not received within timeout or was rejected — no emails sent`
+    
 
 ### M4: Emails Dispatched
 
-- **Description**: All approved greeting emails have been sent to matched employees.
-- **Achieved when**: All sub-workflow calls for matched employees have completed and email send confirmations have been received.
-- **Log on achievement**: `M4.achieved: All greeting emails dispatched successfully — {n} emails sent`
-- **Log on miss**: `M4.missed: One or more emails failed to send — HR notified for follow-up`
+-   **Description**: All approved greeting emails have been sent to matched employees.
+    
+-   **Achieved when**: All sub-workflow calls for matched employees have completed and email send confirmations have been received.
+    
+-   **Log on achievement**: `M4.achieved: All greeting emails dispatched successfully — {n} emails sent`
+    
+-   **Log on miss**: `M4.missed: One or more emails failed to send — HR notified for follow-up`
+    
 
----
+* * *
 
 ## Risks, Assumptions, and Dependencies
 
 ### Risks
 
-- **Email provider not confirmed**: Microsoft Outlook is available as the email node but the actual provider is still TBC. If a different provider is required, the email node may need to be replaced.
-- **Agent accuracy on edge dates**: Dates near year-end (e.g., 31.12 or 01.01) or leap year edge cases (29.02) need to be handled correctly in date comparison logic.
-- **CSV data quality**: If the HR CSV contains inconsistent date formats or missing fields, the workflow may fail silently or produce incorrect matches. Input validation is essential.
-- **HR approval timeout**: If HR does not respond to the approval prompt, the workflow must have a defined timeout behavior to avoid hanging runs.
+-   **Email provider not confirmed**: Microsoft Outlook is available as the email node but the actual provider is still TBC. If a different provider is required, the email node may need to be replaced.
+    
+-   **Agent accuracy on edge dates**: Dates near year-end (e.g., 31.12 or 01.01) or leap year edge cases (29.02) need to be handled correctly in date comparison logic.
+    
+-   **CSV data quality**: If the HR CSV contains inconsistent date formats or missing fields, the workflow may fail silently or produce incorrect matches. Input validation is essential.
+    
+-   **HR approval timeout**: If HR does not respond to the approval prompt, the workflow must have a defined timeout behavior to avoid hanging runs.
+    
 
 ### Assumptions
 
-- The CSV file will always use semicolons as delimiters and dates in DD.MM.YYYY format as specified.
-- The workflow is triggered manually by HR once per day (or as needed) — there is no scheduled automatic trigger in scope.
-- The email recipient address in the CSV is valid and deliverable.
-- SAP AI Core / SAP Generative AI Hub is available and configured in the n8n environment.
-- The HR approver has access to the approval interface generated by the workflow.
+-   The CSV file will always use semicolons as delimiters and dates in DD.MM.YYYY format as specified.
+    
+-   The workflow is triggered manually by HR once per day (or as needed) — there is no scheduled automatic trigger in scope.
+    
+-   The email recipient address in the CSV is valid and deliverable.
+    
+-   SAP AI Core / SAP Generative AI Hub is available and configured in the n8n environment.
+    
+-   The HR approver has access to the approval interface generated by the workflow.
+    
 
 ### Dependencies
 
-- SAP Agent node availability and SAP AI Core credentials configured in n8n
-- Email delivery node credentials (Microsoft Outlook or alternative) configured in n8n
-- HR employee has access to the webhook URL to upload the CSV
+-   SAP Agent node availability and SAP AI Core credentials configured in n8n
+    
+-   Email delivery node credentials (Microsoft Outlook or alternative) configured in n8n
+    
+-   HR employee has access to the webhook URL to upload the CSV
+    
 
----
+* * *
 
 ## Open Questions
 
-- Which email provider will be used for final deployment — Microsoft Outlook or another system?
-- Should the approval interface show a preview of the generated email content, or only the list of matched employees?
-- Should there be a fallback if zero matches are found — e.g., a notification to HR confirming "no milestones today"?
-- Should the workflow support re-runs on the same day if HR uploads the CSV more than once?
+-   Which email provider will be used for final deployment — Microsoft Outlook or another system?
+    
+-   Should the approval interface show a preview of the generated email content, or only the list of matched employees?
+    
+-   Should there be a fallback if zero matches are found — e.g., a notification to HR confirming "no milestones today"?
+    
+-   Should the workflow support re-runs on the same day if HR uploads the CSV more than once?
