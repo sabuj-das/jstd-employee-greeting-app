@@ -1,0 +1,87 @@
+name: Joule Studio CLI deploy actions
+
+on:
+  workflow_dispatch:
+
+env:
+  NPM_REGISTRY: "https://registry.npmjs.org/"
+  JL_PACKAGE: "@sap/joule-work-dev-cli-early-adopters@prerelease"
+
+jobs:
+  setup-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Joule Studio CLI
+        run: |
+          npm install -g $JL_PACKAGE --registry $NPM_REGISTRY
+          jl version
+
+      - name: Cache CLI
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            /usr/local/lib/node_modules/
+            /usr/local/bin/jl
+          key: jl-cli-${{ github.run_id }}
+
+  fetch-token:
+    runs-on: ubuntu-latest
+    needs: setup-cli
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      sciToken: ${{ steps.get-sci-token.outputs.sciToken }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get SCI Token
+        id: get-sci-token
+        env:
+          SCI_TENANT_URL: ${{ vars.SCI_TENANT_URL }}
+          SCI_CLIENT_ID: ${{ vars.SCI_CLIENT_ID }}
+        run: python .github/action/fetch-token/fetch.py
+
+  build-solution:
+    runs-on: ubuntu-latest
+    needs: fetch-token
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore CLI cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            /usr/local/lib/node_modules/
+            /usr/local/bin/jl
+          key: jl-cli-${{ github.run_id }}
+
+      - name: Build solution
+        run: jl solution build
+
+  deploy-solution:
+    runs-on: ubuntu-latest
+    needs: [fetch-token, build-solution]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore CLI cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            /usr/local/lib/node_modules/
+            /usr/local/bin/jl
+          key: jl-cli-${{ github.run_id }}
+
+      - name: Deploy solution
+        env:
+          JL_URL: ${{ vars.JOULE_STUDIO_URL }}
+          JOULE_STUDIO_TOKEN: ${{ needs.fetch-token.outputs.sciToken }}
+        run: jl solution deploy --force
