@@ -4,9 +4,12 @@ kind: Solution
 metadata:
   name: employee-greeting-5f068
   version: "1.0.0"
-  description: "Automates work anniversary and birthday greeting emails via CSV-driven n8n workflows with AI-based date matching and HR approval"
+  description: "Automates work anniversary and birthday greeting emails via CSV-driven n8n workflows with AI-based date matching and personalized email generation"
 
 assets:
   - ref: ./assets/workflows/employee-greeting-orchestrator/asset.yaml
   - ref: ./assets/workflows/work-anniversary-email-workflow/asset.yaml
   - ref: ./assets/workflows/birthday-greeting-email-workflow/asset.yaml
+  - ref: ./assets/date-match-agent/asset.yaml
+  - ref: ./assets/anniversary-email-agent/asset.yaml
+  - ref: ./assets/birthday-email-agent/asset.yaml
