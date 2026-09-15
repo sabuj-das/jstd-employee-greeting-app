@@ -41,7 +41,7 @@
                 300
             ],
             "parameters": {
-                "agents": "[{\"ordId\":\"customer.build:agent:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"Birthday Email Agent\"}]",
+                "agents": "[{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"date-match-agent\"},{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"birthday-email-agent\"},{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"anniversary-email-agent\"}]",
                 "agentName": "{\"ordId\":\"customer.build:agent:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"Birthday Email Agent\"}",
                 "chatInput": "={{ 'Write a warm and cheerful birthday greeting email for ' + $json.employeeName + '. Address them by first name. Keep it to 3-4 sentences. Return only the email body text, no subject line.' }}",
                 "sessionId": "={{ $json.employeeEmail }}"

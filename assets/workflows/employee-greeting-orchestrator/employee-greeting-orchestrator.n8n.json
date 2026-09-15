@@ -55,7 +55,7 @@
                 300
             ],
             "parameters": {
-                "agents": "[{\"ordId\":\"customer.build:agent:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"Date Match Agent\"}]",
+                "agents": "[{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"anniversary-email-agent\"},{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"birthday-email-agent\"},{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"date-match-agent\"}]",
                 "agentName": "{\"ordId\":\"customer.build:agent:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"Date Match Agent\"}",
                 "chatInput": "={{ 'Today is ' + new Date().toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'}) + '. Employee data: name=' + $json.name + ', email=' + $json.email + ', dateOfJoining=' + $json.dateOfJoining + ', dateOfBirth=' + $json.dateOfBirth + '. Compare DD.MM of dateOfJoining and DD.MM of dateOfBirth with today DD.MM. Return ONLY valid JSON with exactly these fields: {\"name\": string, \"email\": string, \"dateOfJoining\": string, \"dateOfBirth\": string, \"anniversaryMatch\": boolean, \"birthdayMatch\": boolean}. No commentary, no markdown, only raw JSON.' }}",
                 "sessionId": "={{ $json.email }}"

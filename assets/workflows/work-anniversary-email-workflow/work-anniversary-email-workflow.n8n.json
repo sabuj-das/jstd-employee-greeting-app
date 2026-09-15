@@ -41,7 +41,7 @@
                 300
             ],
             "parameters": {
-                "agents": "[{\"ordId\":\"customer.build:agent:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"Anniversary Email Agent\"}]",
+                "agents": "[{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"anniversary-email-agent\"},{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.birthday-email-agent:v1\",\"name\":\"birthday-email-agent\"},{\"ordId\":\"customer.build:apiResource:employee-greeting-5f068.date-match-agent:v1\",\"name\":\"date-match-agent\"}]",
                 "agentName": "{\"ordId\":\"customer.build:agent:employee-greeting-5f068.anniversary-email-agent:v1\",\"name\":\"Anniversary Email Agent\"}",
                 "chatInput": "={{ 'Write a warm and sincere work anniversary email congratulating ' + $json.employeeName + ' on completing ' + $json.yearsOfService + ' year(s) with the company. Address them by first name. Keep it to 3-4 sentences. Return only the email body text, no subject line.' }}",
                 "sessionId": "={{ $json.employeeEmail }}"
