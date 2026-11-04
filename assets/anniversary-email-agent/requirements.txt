@@ -11,7 +11,7 @@ uvicorn==0.40.0
 httpx==0.28.1
 python-dotenv==1.2.2
 click==8.3.3
-mcp==1.29.0
+mcp==1.30.0
 opentelemetry-instrumentation-starlette==0.65b0
 sap-cloud-sdk==0.53.0
 google-re2==1.1.20251105
